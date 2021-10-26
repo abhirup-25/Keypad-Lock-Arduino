@@ -1,0 +1,172 @@
+#include <Servo.h>
+#include <LiquidCrystal.h>
+#include <Keypad.h>
+int counter=3;
+Servo s;
+String password="";
+String mypassword="";
+const byte ROWS=4;
+const byte COLS=3;
+char hexakeys[ROWS][COLS]=
+{
+  {'1','2','3'},
+  {'4','5','6'},
+  {'7','8','9'},
+  {'*','0','#'}
+};
+byte rowpins[ROWS]={6,5,4,3};
+byte colpins[COLS]={2,16,14};
+Keypad k=Keypad(makeKeymap(hexakeys),rowpins,colpins,ROWS,COLS);
+int rs=12;
+int en=11;
+int db4=10;
+int db5=9;
+int db6=8;
+int db7=7;
+LiquidCrystal lcd(rs,en,db4,db5,db6,db7);
+void setup()
+{
+  pinMode(17,OUTPUT);
+  pinMode(18,INPUT);
+  pinMode(19,OUTPUT);
+  pinMode(0,OUTPUT);
+  lcd.begin(16,2);
+  s.attach(15);
+  Serial.begin(9600);
+  pinMode(13,INPUT);
+  lcd.setCursor(3,0);
+  lcd.print("KEYPAD LOCK");
+  lcd.setCursor(4,1);
+  lcd.print("PROJECT");
+  delay(1500);
+  lcd.clear();
+  lcd.setCursor(6,0);
+  lcd.print("BY");
+  lcd.setCursor(1,1);
+  lcd.print("ABHIRUP SARKAR");
+  delay(2000);
+  lcd.clear();
+  lcd.setCursor(1,0);
+  lcd.print("ENTER NEW PASS.");
+  while(Serial.available()==0)
+  {
+  }
+  password=Serial.readString();
+  Serial.println("NEW PASSWORD YOU HAVE ENTERED = "+password);
+  lcd.setCursor(0,1);
+  lcd.print("NEW PASSWORD SET");
+  delay(2000);
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("PRESS * TO CHECK");
+  lcd.setCursor(0,1);
+  lcd.print("PRESS # TO REDO");
+  delay(3000);
+  lcd.clear();
+  lcd.setCursor(1,0);
+  lcd.print("AFTER SWITCHING");
+  lcd.setCursor(1,1);
+  lcd.print("ON THE CIRCUIT");
+  delay(3000);
+  lcd.clear();
+}
+void loop()
+{
+  digitalWrite(17,LOW);
+  delay(2);
+  digitalWrite(17,HIGH);
+  delay(10);
+  digitalWrite(17,LOW);
+  float dur=pulseIn(18,HIGH);
+  float dis=(dur/2)*0.0343;
+  int n=digitalRead(13);
+  if(n==HIGH && dis<=15)
+  {
+  lcd.setCursor(1,0);
+  lcd.print("ENTER PASSWORD");
+  digitalWrite(19,HIGH);
+  char p=k.getKey();
+  if(p!= NO_KEY )
+  {
+    if(p=='0'||p=='1'||p=='2'||p=='3'||p=='4'||p=='5'||p=='6'||p=='7'||p=='8'||p=='9')
+    {
+      mypassword=mypassword+p;
+      lcd.setCursor(5,1);
+      lcd.print(mypassword);
+    }
+    if(p=='*')
+    {
+      if(mypassword==password)
+      {
+        counter=3;
+        lcd.setCursor(5,1);
+        lcd.print("MATCH!");
+        delay(2000);
+        lcd.clear();
+        lcd.setCursor(1,1);
+        lcd.print("ACCESS GRANTED!");
+        delay(3000);
+        lcd.clear();
+        s.write(0);
+        delay(15);
+        lcd.setCursor(4,1);
+        lcd.print("WELCOME!");
+        delay(2000);
+        lcd.clear();
+      }
+      else 
+      {
+        lcd.setCursor(1,1);
+        lcd.print("WRONG PASSWORD");
+        delay(2000);
+        lcd.clear();
+        lcd.setCursor(1,1);
+        lcd.print("ACCESS DENIED!");
+        delay(2000);
+        lcd.clear();
+        counter=counter-1;
+        lcd.setCursor(0,0);
+        lcd.print("NUMBER OF");
+        lcd.setCursor(0,1);
+        lcd.print("ATTEMPTS LEFT=");
+        lcd.setCursor(15,1);
+        lcd.print(counter);
+        delay(2000);
+        lcd.clear();
+        if(counter==0)
+        {
+          while(true)
+          {
+            lcd.setCursor(1,1);
+            lcd.print("INTRUDER ALERT!");
+            delay(2000);
+            lcd.clear();
+            lcd.setCursor(1,1);
+            lcd.print("OUT OF CHANCES!");
+            delay(2000);
+            lcd.clear();
+            digitalWrite(19,LOW);
+            s.write(180);
+            delay(15);
+          }
+        }
+      }
+    }
+      if(p=='#')
+      {
+        mypassword="";
+        lcd.setCursor(1,1);
+        lcd.print("REFRESHING...");
+        delay(2000);
+        lcd.clear();
+        s.write(90);
+        delay(15);
+      }
+  }
+  }
+  else  
+  {
+    digitalWrite(19,LOW);
+    delay(10);
+  }
+}
